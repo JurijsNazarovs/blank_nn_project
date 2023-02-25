@@ -159,7 +159,7 @@ def valid(args,
     return best_loss
 
 
-def test(args, model, data_obj):
+def test(args, model, data_loader):
     '''
     data_obj is important to conduct right normalization for test data
     data_obj contains infromation about how to normalize test data.
@@ -176,18 +176,15 @@ def test(args, model, data_obj):
     prediction_file_writer.write(header)
 
     # Make predictions and write to the file
-    for itr, (x, t) in enumerate(zip(xs, ts)):
-        # We do not use Batch here on purpose but use a single sample,
-        # to be able to test with methods, independent of time steps.
-        x = torch.tensor(x, device=args.device)[None]  # add batch to x
+    for itr, x in enumerate(data_loader):
+        x = torch.tensor(x, device=args.device)
         y_hat = model(x)
 
         # Transform y_hat back to original scale
         y_hat = y_hat.squeeze().data.cpu().numpy()
-        y_hat = data_obj.reverse_transform(y_hat, xs_raw[itr])
 
         # Create a record with time and prediciton
-        str_write = np.concatenate([t, y_hat])
+        str_write = y_hat
         str_write = ','.join([str(i) for i in str_write]) + '\n'
         prediction_file_writer.write(str_write)
 
